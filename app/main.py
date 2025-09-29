@@ -1,24 +1,114 @@
-from fastapi import FastAPI, Depends, HTTPException
+# app/main.py
+from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app import models, schemas, crud
 from app.db import engine, Base, get_db
+from app import schemas, crud, models
 
-# Cria tabelas no banco
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="API Exemplo FastAPI")
+app = FastAPI(title="Trading Algorítmico API - Estrutura")
 
-@app.get("/")
-def root():
-    return {"message": "Hello, FastAPI!"}
+# -------------- HEALTH --------------
+@app.get("/health", response_model=schemas.HealthResponse)
+def health(db: Session = Depends(get_db)):
+    # Checagem simples de conexão com o DB
+    try:
+        db.execute("SELECT 1")
+        return schemas.HealthResponse(status="ok", db="connected")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/items/", response_model=schemas.Item)
-def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)):
-    return crud.create_item(db, item)
 
-@app.get("/items/{item_id}", response_model=schemas.Item)
-def read_item(item_id: int, db: Session = Depends(get_db)):
-    db_item = crud.get_item(db, item_id)
-    if not db_item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return db_item
+# -- BACKTEST RUN --
+@app.post("/backtests/run", response_model=schemas.RunBacktestResponse)
+def run_backtest(req: schemas.RunBacktestRequest, db: Session = Depends(get_db)):
+    """
+    Estrutura do endpoint de disparo.
+    Por enquanto só cria um registro com status 'created' e retorna o ID.
+    #TODO plugar a lógica (download dados, backtrader etc.).
+    """
+    bt = crud.create_backtest_record(
+        db,
+        ticker=req.ticker,
+        start_date=req.start_date,
+        end_date=req.end_date,
+        strategy_type=req.strategy_type,
+        strategy_params=req.strategy_params,
+        initial_cash=req.initial_cash,
+        commission=req.commission,
+        timeframe=req.timeframe,
+    )
+    return schemas.RunBacktestResponse(id=bt.id, status=bt.status)
+
+
+# -- RESULTADOS BACKTEST -- 
+@app.get("/backtests/{backtest_id}/results", response_model=schemas.BacktestResults)
+def get_backtest_results(backtest_id: int, db: Session = Depends(get_db)):
+    """
+    Stub de resultados.
+    """
+    bt = crud.get_backtest(db, backtest_id)
+    if not bt:
+        raise HTTPException(status_code=404, detail="Backtest não encontrado")
+
+
+    return schemas.BacktestResults(
+        backtest_id=bt.id,
+        metrics=schemas.ResultMetrics(
+            total_return=0.0,
+            sharpe=0.0,
+            max_drawdown=0.0,
+            win_rate=None,
+            avg_trade_return=None,
+        ),
+        trades=[],
+        daily_positions=[],
+        equity_curve=[],
+    )
+
+
+#-- LIST BACKTEST -- 
+@app.get("/backtests")
+def list_backtests(
+    ticker: str | None = Query(default=None),
+    strategy_type: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+):
+    """
+    Lista backtests com filtros e paginação.
+    """
+    rows = crud.list_backtests(
+        db,
+        ticker=ticker,
+        strategy_type=strategy_type,
+        limit=limit,
+        offset=offset,
+    )
+    return [
+        {
+            "id": r.id,
+            "created_at": r.created_at.isoformat(),
+            "ticker": r.ticker,
+            "strategy_type": r.strategy_type,
+            "status": r.status,
+        }
+        for r in rows
+    ]
+
+
+# -- UPDATE INDICATORS -- 
+@app.post("/data/indicators/update")
+def update_indicators(req: schemas.UpdateIndicatorsRequest):
+    """
+    Só estrutura por enquanto. 
+    #TODO - Fazer implementação no futuro
+    """
+    return {
+        "status": "accepted",
+        "ticker": req.ticker,
+        "start_date": req.start_date,
+        "end_date": req.end_date,
+        "message": "Atualização agendada (stub).",
+    }
