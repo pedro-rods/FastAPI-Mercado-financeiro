@@ -4,10 +4,24 @@ from sqlalchemy.orm import Session
 from app.db import engine, Base, get_db
 from app import schemas, crud, models
 from app.strategies import REGISTRY, validate_and_normalize_params
+from app.services.yahoo import fetch_prices
+from app.crud_prices import ensure_symbol, bulk_upsert_prices
 
+from app.models import (
+    Symbol, Price, Indicator, Backtest, Trade, DailyPosition, Metric, JobRun
+)
+
+# só depois de importar os modelos, crie as tabelas
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Trading Algorítmico API - Estrutura")
+
+@app.on_event("startup")
+def on_startup():
+    from app.models import (
+        Symbol, Price, Indicator, Backtest, Trade, DailyPosition, Metric, JobRun
+    )
+    Base.metadata.create_all(bind=engine)
 
 # -------------- HEALTH --------------
 @app.get("/health", response_model=schemas.HealthResponse)

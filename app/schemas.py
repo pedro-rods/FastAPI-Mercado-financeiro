@@ -15,9 +15,10 @@ class RunBacktestRequest(BaseModel):
     timeframe: Optional[str] = Field(default="1d", example="1d")
 
 class UpdateIndicatorsRequest(BaseModel):
-    ticker: str = Field(..., example="PETR4.SA")
-    start_date: str = Field(..., example="2021-01-01")
-    end_date: str = Field(..., example="2021-01-10")
+    ticker: str
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+
 
 # -- RESPONSES -- 
 
@@ -33,7 +34,7 @@ class BackTestListItem(BaseModel):
     status: str
 
 class ResultMetrics(BaseModel):
-    total_returns: float = 0.0
+    total_return: float = 0.0
     sharpe: float = 0.0
     max_drawdown: float = 0.0
     win_rate: Optional[float]=None
