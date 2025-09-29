@@ -3,6 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.db import engine, Base, get_db
 from app import schemas, crud, models
+from app.strategies import REGISTRY, validate_and_normalize_params
 
 Base.metadata.create_all(bind=engine)
 
@@ -22,18 +23,19 @@ def health(db: Session = Depends(get_db)):
 # -- BACKTEST RUN --
 @app.post("/backtests/run", response_model=schemas.RunBacktestResponse)
 def run_backtest(req: schemas.RunBacktestRequest, db: Session = Depends(get_db)):
-    """
-    Estrutura do endpoint de disparo.
-    Por enquanto só cria um registro com status 'created' e retorna o ID.
-    #TODO plugar a lógica (download dados, backtrader etc.).
-    """
+    # valida e normaliza parâmetros da estratégia
+    try:
+        normalized_params = validate_and_normalize_params(req.strategy_type, req.strategy_params)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     bt = crud.create_backtest_record(
         db,
         ticker=req.ticker,
         start_date=req.start_date,
         end_date=req.end_date,
         strategy_type=req.strategy_type,
-        strategy_params=req.strategy_params,
+        strategy_params=normalized_params,  # já normalizado
         initial_cash=req.initial_cash,
         commission=req.commission,
         timeframe=req.timeframe,
@@ -112,3 +114,18 @@ def update_indicators(req: schemas.UpdateIndicatorsRequest):
         "end_date": req.end_date,
         "message": "Atualização agendada (stub).",
     }
+
+#endpoint para listar as estratégias
+
+@app.get("/strategies")
+def list_strategies():
+    return [
+        {
+            "type": key,
+            "name": meta["name"],
+            "description": meta["description"],
+            "default_params": meta["default_params"],
+        }
+        for key, meta in REGISTRY.items()
+    ]
+

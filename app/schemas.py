@@ -1,18 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional
 
-class ItemBase(BaseModel):
-    name: str
-    description: str | None = None
-
-class ItemCreate(ItemBase):
-    pass
-
-class Item(ItemBase):
-    id: int
-
-    class Config:
-        orm_mode = True
 
 # -- REQUESTS --
 
@@ -22,8 +10,8 @@ class RunBacktestRequest(BaseModel):
     end_date: str = Field(..., example="2021-01-10")
     strategy_type: str = Field(..., example="sma_cross")
     strategy_params: Optional[Dict[str, Any]] = Field(default=None, example={"fast":50, "slow":200})
-    initial_cash: float = Field(default = 1000.0, example = 1000.0)
-    comission: float = Field(default=0.0, example = 0.0)
+    initial_cash: float = Field(default = 100000.0, example = 100000.0)
+    commission: float = Field(default=0.0, example = 0.0)
     timeframe: Optional[str] = Field(default="1d", example="1d")
 
 class UpdateIndicatorsRequest(BaseModel):
@@ -47,17 +35,17 @@ class BackTestListItem(BaseModel):
 class ResultMetrics(BaseModel):
     total_returns: float = 0.0
     sharpe: float = 0.0
-    max_drawndown = float = 0.0
-    win_rate: float | None=None
-    avg_trade_return: float | None=None
+    max_drawdown: float = 0.0
+    win_rate: Optional[float]=None
+    avg_trade_return: Optional[float]=None
 
 class Trade(BaseModel):
     date:str
     side:str
     price:float
     size:float
-    commission:float | None = 0.0
-    pnl:float | None = 0.0
+    commission:Optional[float] = 0.0
+    pnl:Optional[float] = 0.0
 
 class DailyPosition(BaseModel):
     date: str
