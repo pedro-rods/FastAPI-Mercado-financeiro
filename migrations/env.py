@@ -12,11 +12,9 @@ from app import models
 
 config = context.config
 
-# permite pegar DATABASE_URL do ambiente
-if config.get_main_option("sqlalchemy.url", None) is None:
-    db_url = os.getenv("DATABASE_URL")
-    if db_url:
-        config.set_main_option("sqlalchemy.url", db_url)
+db_url = os.getenv("DATABASE_URL")
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

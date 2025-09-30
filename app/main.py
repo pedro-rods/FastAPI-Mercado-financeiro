@@ -1,7 +1,7 @@
 # app/main.py
 from fastapi import FastAPI, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
-from app.db import engine, Base, get_db
+from app.db import engine, Base, get_db, init_dev_db
 from app import schemas, crud, models
 from app.strategies import REGISTRY, validate_and_normalize_params
 from app.services.yahoo import fetch_prices
@@ -26,6 +26,7 @@ app = FastAPI(title="Trading Algorítmico API - Estrutura")
 
 @app.on_event("startup")
 def on_startup():
+    init_dev_db()
     from app.models import (
         Symbol, Price, Indicator, Backtest, Trade, DailyPosition, Metric, JobRun
     )

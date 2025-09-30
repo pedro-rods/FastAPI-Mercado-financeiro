@@ -1,3 +1,10 @@
+Perfeito 🚀 — vou estender o seu **README.md final** incluindo a seção **📬 Coleção de Requests** com os arquivos prontos (Postman, Thunder Client e VS Code REST Client) e um mini tutorial de importação.
+
+---
+
+# README.md (versão final com coleções incluídas)
+
+```markdown
 # Trading API – Backtesting e Estratégias Algorítmicas
 
 API em **FastAPI** para backtesting de estratégias quantitativas no mercado financeiro, com integração ao Yahoo Finance, execução em **Backtrader**, controle de versões de banco com **Alembic**, e visualizações básicas em HTML/Notebook.
@@ -60,11 +67,10 @@ FastAPI-Mercado-financeiro/
 │   └── ui.py               # rotas de visualização HTML
 ├── bin/
 │   ├── seed.py             # cadastro inicial de tickers
-│   ├── viz_from_api.py     # script para visualizar backtest
 │   └── jobs/               # rotinas agendadas
 ├── migrations/             # alembic migrations
 ├── tests/                  # pytest + coverage
-├── notebooks/              # (opcional) notebooks de exploração
+├── collections/            # 📬 coleções de requests (Postman, Thunder, REST Client)
 ├── requirements.txt
 ├── docker-compose.yml
 ├── Dockerfile
@@ -119,15 +125,6 @@ Acesse em:
 
 ## 🐳 Execução com Docker
 
-Build e run:
-
-```bash
-docker build -t trading-api .
-docker run -p 8000:8000 trading-api
-```
-
-Ou diretamente:
-
 ```bash
 docker-compose up --build
 ```
@@ -135,8 +132,6 @@ docker-compose up --build
 ---
 
 ## 🧪 Testes e cobertura
-
-Rodar testes com Pytest:
 
 ```bash
 pytest --cov=app --cov-report=term-missing
@@ -153,62 +148,25 @@ Meta: **≥70% de cobertura nos módulos core**
 
 ---
 
-## 📡 Exemplos de requests
+## 📬 Coleção de Requests
 
-### Health
+Coleções prontas para testar a API:
 
-```http
-GET http://localhost:8000/health
-```
+* `collections/trading_api.postman_collection.json` → Importar no **Postman**
+* `collections/trading_api.thunder-collection.json` → Importar no **Thunder Client** (VS Code)
+* `collections/trading_api.http` → Usar no **VS Code REST Client**
 
-### Run Backtest SMA
+### Como importar
 
-```http
-POST http://localhost:8000/backtests/run
-Content-Type: application/json
-
-{
-  "ticker": "PETR4.SA",
-  "start_date": "2021-01-01",
-  "end_date": "2024-12-31",
-  "strategy_type": "sma_cross",
-  "strategy_params": {
-    "fast": 20,
-    "slow": 100,
-    "risk_pct": 0.01,
-    "stop_method": "atr",
-    "atr_period": 14,
-    "atr_mult": 2.0,
-    "lot_size": 1
-  },
-  "initial_cash": 100000,
-  "commission": 0.001,
-  "timeframe": "1d"
-}
-```
-
-### Get Results
-
-```http
-GET http://localhost:8000/backtests/1/results
-```
-
-### Jobs
-
-```http
-POST http://localhost:8000/jobs/daily_indicators
-["PETR4.SA","VALE3.SA","AAPL"]
-
-POST http://localhost:8000/jobs/health_check
-```
+* **Postman:** *Import* → cole JSON ou selecione arquivo.
+* **Thunder Client (VS Code):** Sidebar → *Collections* → *Import* → selecione JSON.
+* **VS Code REST Client:** abra `trading_api.http` e clique em *Send Request* sobre cada bloco.
 
 ---
 
 ## 📊 Visualização
 
 ### UI HTML
-
-Acesse:
 
 ```
 http://localhost:8000/ui/backtests/{id}
@@ -220,22 +178,29 @@ http://localhost:8000/ui/backtests/{id}
 python bin/viz_from_api.py 1
 ```
 
-Plota:
-
-* Curva de Equity
-* Retornos diários
-* Drawdown
-
 ---
 
 ## 🔧 Variáveis de ambiente
 
-Arquivo `.env` (exemplo):
+`.env` (exemplo):
 
 ```
 DATABASE_URL=postgresql+psycopg2://appuser:appsecret@localhost:5432/tradingdb
 BT_DEBUG=0
+USE_SQLITE=0
 ```
+
+Se `USE_SQLITE=1`, o projeto roda em **modo dev com SQLite** (sem migrações, recria DB do zero).
+Alternativamente, também é possível rodar o projeto localmente caso algo dê errado no processo: 
+Utilizando os seguintes comandos:
+```
+pip install -r requirements.txt
+$env:APP_MODE="dev"
+uvicron app.main:app --reload  
+
+```
+
+
 
 ---
 
