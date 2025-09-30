@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 class RunBacktestRequest(BaseModel):
     ticker: str = Field(..., example="PETR4.SA")
     start_date: str = Field(..., example="2021-01-01")
-    end_date: str = Field(..., example="2021-01-10")
+    end_date: str = Field(..., example="2024-12-31")
     strategy_type: str = Field(..., example="sma_cross")
     strategy_params: Optional[Dict[str, Any]] = Field(default=None, example={"fast":50, "slow":200})
     initial_cash: float = Field(default = 100000.0, example = 100000.0)

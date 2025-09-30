@@ -1,12 +1,17 @@
-# app/strategies/sma_cross.py
-from app.strategies.atr_mixin import AtrRiskMixin
+import backtrader as bt
 
-class SmaCrossStrategy(AtrRiskMixin):
-    """
-    Estratégia de Cruzamento de Médias (stub).
-    Depois: implementar com Backtrader (SMA rápida/lenta + ATR opcional).
-    """
-    def __init__(self, fast: int = 50, slow: int = 200, risk: dict | None = None):
-        self.fast = fast
-        self.slow = slow
-        self.risk_cfg = risk or {}
+class SmaCrossStrategy(bt.Strategy):
+    params = (("fast", 50), ("slow", 200), ("risk", None))
+
+    def __init__(self):
+        sma_fast = bt.ind.SMA(period=self.p.fast)
+        sma_slow = bt.ind.SMA(period=self.p.slow)
+        self.crossover = bt.ind.CrossOver(sma_fast, sma_slow)
+         # se quiser usar ATR/position sizing no futuro, use self.p.risk aqui
+
+    def next(self):
+        if not self.position:
+            if self.crossover > 0:
+                self.buy()
+        elif self.crossover < 0:
+            self.close()

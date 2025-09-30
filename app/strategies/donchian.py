@@ -1,12 +1,16 @@
-# app/strategies/donchian.py
-from app.strategies.atr_mixin import AtrRiskMixin
+import backtrader as bt
 
-class DonchianBreakout(AtrRiskMixin):
-    """
-    Breakout Donchian (stub).
-    Depois: máxima N para entrada; mínima M para saída; ATR opcional.
-    """
-    def __init__(self, n_high: int = 20, n_low: int = 10, risk: dict | None = None):
-        self.n_high = n_high
-        self.n_low = n_low
-        self.risk_cfg = risk or {}
+class DonchianBreakout(bt.Strategy):
+    params = (("n_high", 20), ("n_low", 10), ("risk", None))
+
+    def __init__(self):
+        self.dch_high = bt.ind.Highest(self.data.high, period=self.p.n_high)
+        self.dch_low  = bt.ind.Lowest(self.data.low, period=self.p.n_low)
+        # ATR opcional no futuro com self.p.risk
+    def next(self):
+        if not self.position:
+            if self.data.close[0] > self.dch_high[0]:
+                self.buy()
+        else:
+            if self.data.close[0] < self.dch_low[0]:
+                self.close()
