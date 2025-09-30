@@ -5,3 +5,6 @@ psycopg[binary]
 pydantic
 yfinance
 backtrader
+matplotlib
+pandas
+numpy
