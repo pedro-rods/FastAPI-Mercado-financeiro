@@ -1,7 +1,6 @@
 fastapi
 uvicorn[standard]
 sqlalchemy
-psycopg[binary]
 pydantic
 yfinance
 backtrader
@@ -10,4 +9,7 @@ pandas
 numpy
 pytest
 pytest-cov
-htppx==0.27.2
+SQLAlchemy>=2.0
+psycopg2-binary>=2.9
+alembic>=1.13
+python-dotenv>=1.0

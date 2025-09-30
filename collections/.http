@@ -1,0 +1,46 @@
+### Health
+GET http://localhost:8000/health
+
+### List strategies
+GET http://localhost:8000/strategies
+
+### Run backtest SMA
+POST http://localhost:8000/backtests/run
+Content-Type: application/json
+
+{
+  "ticker": "PETR4.SA",
+  "start_date": "2021-01-01",
+  "end_date": "2024-12-31",
+  "strategy_type": "sma_cross",
+  "strategy_params": {
+    "fast": 20,
+    "slow": 100,
+    "risk_pct": 0.01,
+    "stop_method": "atr",
+    "atr_period": 14,
+    "atr_mult": 2.0,
+    "lot_size": 1
+  },
+  "initial_cash": 100000,
+  "commission": 0.001,
+  "timeframe": "1d"
+}
+
+### Get results (ajuste {id})
+GET http://localhost:8000/backtests/1/results
+
+### List backtests (filtros opcionais)
+GET http://localhost:8000/backtests?ticker=PETR4.SA&strategy_type=sma_cross&limit=20&offset=0
+
+### UI HTML (gráficos)
+GET http://localhost:8000/ui/backtests/1
+
+### Job: daily_indicators
+POST http://localhost:8000/jobs/daily_indicators
+Content-Type: application/json
+
+["PETR4.SA", "VALE3.SA", "AAPL"]
+
+### Job: health_check
+POST http://localhost:8000/jobs/health_check

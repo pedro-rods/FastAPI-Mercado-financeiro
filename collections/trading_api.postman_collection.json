@@ -1,0 +1,23 @@
+{
+  "info": { "name": "Trading API", "_postman_id": "11111111-2222-3333-4444-555555555555", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "item": [
+    { "name": "Health", "request": { "method": "GET", "url": "http://localhost:8000/health" } },
+    { "name": "List strategies", "request": { "method": "GET", "url": "http://localhost:8000/strategies" } },
+    { "name": "Run backtest SMA", "request": {
+        "method": "POST",
+        "header": [{"key":"Content-Type","value":"application/json"}],
+        "body": { "mode":"raw", "raw": "{\n  \"ticker\": \"PETR4.SA\",\n  \"start_date\": \"2021-01-01\",\n  \"end_date\": \"2024-12-31\",\n  \"strategy_type\": \"sma_cross\",\n  \"strategy_params\": {\"fast\": 20, \"slow\": 100, \"risk_pct\": 0.01, \"stop_method\": \"atr\", \"atr_period\": 14, \"atr_mult\": 2.0, \"lot_size\": 1},\n  \"initial_cash\": 100000,\n  \"commission\": 0.001,\n  \"timeframe\": \"1d\"\n}" },
+        "url": "http://localhost:8000/backtests/run"
+    }},
+    { "name": "Get results", "request": { "method": "GET", "url": "http://localhost:8000/backtests/1/results" } },
+    { "name": "List backtests", "request": { "method": "GET", "url": "http://localhost:8000/backtests?limit=20&offset=0" } },
+    { "name": "UI HTML", "request": { "method": "GET", "url": "http://localhost:8000/ui/backtests/1" } },
+    { "name": "Job - daily_indicators", "request": {
+      "method": "POST",
+      "header": [{"key":"Content-Type","value":"application/json"}],
+      "body": { "mode":"raw", "raw": "[\"PETR4.SA\",\"VALE3.SA\",\"AAPL\"]" },
+      "url": "http://localhost:8000/jobs/daily_indicators"
+    }},
+    { "name": "Job - health_check", "request": { "method": "POST", "url": "http://localhost:8000/jobs/health_check" } }
+  ]
+}

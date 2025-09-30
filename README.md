@@ -1,117 +1,172 @@
-# 📈 Trading Algorítmico API (Case Dev Jr)
+# Trading API – Backtesting e Estratégias Algorítmicas
 
-API em **FastAPI** para backtests de estratégias de trading com integração a dados do **Yahoo Finance**, execução de estratégias em **Backtrader**, métricas de performance, gestão de risco e visualização dos resultados.
-
----
-
-## 🚀 Visão Geral
-
-Este projeto demonstra:
-
-- **API REST** para rodar e consultar backtests.
-- **Estratégias de trend following** implementadas em Backtrader:
-  - Cruzamento de Médias Móveis (SMA Cross)
-  - Donchian Breakout
-  - Momentum
-- **Gestão de Risco**:
-  - Stop-loss obrigatório (ATR, média móvel ou banda de suporte/resistência).
-  - Dimensionamento de posição (`position sizing`) para limitar risco de cada trade a 1% do capital.
-- **Banco de Dados**: SQLite por padrão, facilmente adaptável para Postgres.
-- **Visualização**:
-  - Gráficos de curva de equity, drawdowns, distribuição de retornos e preços com sinais de compra/venda.
-  - Interface simples em `/ui/backtests/{id}` renderizando HTML+Plotly.
-- **Extensível** para execução em tempo real (live trading).
+API em **FastAPI** para backtesting de estratégias quantitativas no mercado financeiro, com integração ao Yahoo Finance, execução em **Backtrader**, controle de versões de banco com **Alembic**, e visualizações básicas em HTML/Notebook.
 
 ---
 
-## 🏗️ Arquitetura
+## 🚀 Funcionalidades
+
+- **Endpoints principais**
+  - `POST /backtests/run` – dispara backtest (SMA, Donchian, Momentum)
+  - `GET /backtests/{id}/results` – resultados (métricas, trades, curva de equity)
+  - `GET /backtests` – lista backtests com filtros
+  - `POST /data/indicators/update` – atualiza preços e indicadores
+  - `GET /health` – health-check da API
+  - `GET /ui/backtests/{id}` – visualização HTML (gráficos)
+
+- **Estratégias disponíveis**
+  - **SMA Cross** – cruzamento de médias móveis
+  - **Donchian Breakout** – rompimento de máximas/mínimas
+  - **Momentum** – força relativa em janela de lookback
+  - ✅ Todas implementam **gestão de risco**:
+    - Dimensionamento de posição (`position sizing`) com risco fixo (ex.: 1% do capital)
+    - Stop baseado em **ATR** (volatilidade) ou média móvel
+
+- **Gestão de risco**
+  - Capital inicial configurável
+  - Stop-loss técnico obrigatório
+  - Tamanho da posição calculado para limitar perda máxima
+
+- **Rotinas (cron jobs)**
+  - `daily_indicators` – baixa OHLCV e recalcula indicadores diariamente
+  - `health_check` – verifica conexão Postgres + latência do Yahoo
+
+- **Banco de dados**
+  - Postgres (via Docker)
+  - Migrações gerenciadas com **Alembic**
+  - Seed inicial de tickers
+
+- **Visualização**
+  - Gráficos de preço + sinais de compra/venda
+  - Curva de equity
+  - Distribuição de retornos
+  - Série de drawdown
+  - Disponível via `/ui/backtests/{id}` ou notebook/script (`bin/viz_from_api.py`)
+
+---
+
+## 📂 Estrutura do projeto
 
 ```
 
-FastAPI (endpoints)
-│
-├── app/main.py           # definição dos endpoints
-├── app/schemas.py        # modelos Pydantic (request/response)
-├── app/models.py         # tabelas SQLAlchemy
-├── app/crud.py           # funções de banco
-├── app/db.py             # setup do banco (SQLite / Postgres)
-│
-├── app/strategies/       # estratégias em Backtrader
-│   ├── sma_cross.py
-│   ├── donchian.py
-│   ├── momentum.py
-│   └── **init**.py       # registry + validação
-│
-├── app/services/         # integrações externas
-│   └── yahoo.py          # fetch de dados do yfinance
-│
-├── app/backtest_engine.py # motor que conecta dados + estratégia + métricas
-├── app/ui.py             # endpoints de visualização em HTML/Plotly
-│
-└── viz.py                # script/notebook para visualizações customizadas
+FastAPI-Mercado-financeiro/
+├── app/
+│   ├── main.py             # ponto de entrada FastAPI
+│   ├── models.py           # SQLAlchemy ORM
+│   ├── schemas.py          # Pydantic
+│   ├── backtest_engine.py  # integração Backtrader
+│   ├── strategies/         # estratégias (sma, donchian, momentum)
+│   ├── services/           # serviços externos (Yahoo Finance)
+│   └── ui.py               # rotas de visualização HTML
+├── bin/
+│   ├── seed.py             # cadastro inicial de tickers
+│   ├── viz_from_api.py     # script para visualizar backtest
+│   └── jobs/               # rotinas agendadas
+├── migrations/             # alembic migrations
+├── tests/                  # pytest + coverage
+├── notebooks/              # (opcional) notebooks de exploração
+├── requirements.txt
+├── docker-compose.yml
+├── Dockerfile
+├── alembic.ini
+└── README.md
 
 ````
 
 ---
 
-## ⚙️ Instalação
+## ⚙️ Instalação e execução
 
-1. Clone o repositório e crie ambiente virtual:
+### 1. Requisitos
+- Python 3.11+
+- Docker e Docker Compose
 
+### 2. Clonar e instalar dependências
 ```bash
-git clone <repo-url>
-cd projeto
+git clone https://github.com/seuusuario/fastapi-trading.git
+cd fastapi-trading
 python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
+source .venv/bin/activate  # Linux/Mac
 .venv\Scripts\activate     # Windows
+pip install -r requirements.txt
 ````
 
-2. Instale as dependências:
+### 3. Subir Postgres via Docker
 
 ```bash
-pip install -r requirements.txt
+docker-compose up -d
 ```
 
-Dependências principais:
+### 4. Migrações + seed
 
-* `fastapi`
-* `uvicorn`
-* `sqlalchemy`
-* `pydantic`
-* `yfinance`
-* `backtrader`
-* `matplotlib`
-* `plotly`
-* `pandas`
+```bash
+alembic upgrade head
+python bin/seed.py
+```
 
-3. Inicie o servidor:
+### 5. Rodar API
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-API sobe em [http://127.0.0.1:8000](http://127.0.0.1:8000)
-Docs automáticas: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+Acesse em:
+👉 [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger)
+👉 [http://localhost:8000/redoc](http://localhost:8000/redoc) (Redoc)
+👉 [http://localhost:8000/ui/backtests/{id}](http://localhost:8000/ui/backtests/{id}) (UI HTML)
 
 ---
 
-## 📡 Endpoints Principais
+## 🐳 Execução com Docker
 
-### Healthcheck
+Build e run:
 
-```
-GET /health
-```
-
-### Rodar um backtest
-
-```
-POST /backtests/run
+```bash
+docker build -t trading-api .
+docker run -p 8000:8000 trading-api
 ```
 
-**Body exemplo**:
+Ou diretamente:
 
-```json
+```bash
+docker-compose up --build
+```
+
+---
+
+## 🧪 Testes e cobertura
+
+Rodar testes com Pytest:
+
+```bash
+pytest --cov=app --cov-report=term-missing
+```
+
+Com HTML:
+
+```bash
+pytest --cov=app --cov-report=html
+open htmlcov/index.html
+```
+
+Meta: **≥70% de cobertura nos módulos core**
+
+---
+
+## 📡 Exemplos de requests
+
+### Health
+
+```http
+GET http://localhost:8000/health
+```
+
+### Run Backtest SMA
+
+```http
+POST http://localhost:8000/backtests/run
+Content-Type: application/json
+
 {
   "ticker": "PETR4.SA",
   "start_date": "2021-01-01",
@@ -123,7 +178,8 @@ POST /backtests/run
     "risk_pct": 0.01,
     "stop_method": "atr",
     "atr_period": 14,
-    "atr_mult": 2.0
+    "atr_mult": 2.0,
+    "lot_size": 1
   },
   "initial_cash": 100000,
   "commission": 0.001,
@@ -131,110 +187,67 @@ POST /backtests/run
 }
 ```
 
-### Resultados de um backtest
+### Get Results
 
-```
-GET /backtests/{id}/results
-```
-
-**Resposta exemplo**:
-
-```json
-{
-  "backtest_id": 1,
-  "metrics": {
-    "total_return": 0.12,
-    "sharpe": 1.05,
-    "max_drawdown": -0.15,
-    "win_rate": 0.55,
-    "avg_trade_return": 0.02
-  },
-  "trades": [...],
-  "daily_positions": [...],
-  "equity_curve": [...]
-}
+```http
+GET http://localhost:8000/backtests/1/results
 ```
 
-### Listar backtests
+### Jobs
 
-```
-GET /backtests
-```
+```http
+POST http://localhost:8000/jobs/daily_indicators
+["PETR4.SA","VALE3.SA","AAPL"]
 
-### Forçar atualização de indicadores
-
+POST http://localhost:8000/jobs/health_check
 ```
-POST /data/indicators/update
-```
-
-### Listar estratégias disponíveis
-
-```
-GET /strategies
-```
-
-### Visualizar resultados (UI)
-
-```
-GET /ui/backtests/{id}
-```
-
-Renderiza uma página HTML com gráficos interativos de equity, drawdowns e retornos.
-⚠️ Inclui correção para parâmetros legados (`threshold_pct → thresh`).
 
 ---
 
-## 📊 Estratégias
+## 📊 Visualização
 
-### 1. SMA Cross
+### UI HTML
 
-* Compra quando SMA(fast) cruza acima da SMA(slow).
-* Venda quando cruza para baixo.
-* Stop: ATR ou média lenta.
-* Risk sizing: 1% do equity.
+Acesse:
 
-### 2. Donchian Breakout
+```
+http://localhost:8000/ui/backtests/{id}
+```
 
-* Compra quando preço rompe máxima dos últimos `n` períodos.
-* Saída quando rompe mínima.
-* Stop: ATR ou banda inferior.
-* Risk sizing: 1% do equity.
+### Script local
 
-### 3. Momentum
+```bash
+python bin/viz_from_api.py 1
+```
 
-* Compra quando retorno acumulado em `lookback` períodos > `thresh`.
-* Saída quando momentum ≤ 0.
-* Stop: ATR ou média móvel.
-* Risk sizing: 1% do equity.
-* **Compatibilidade retroativa**: parâmetros antigos como `threshold_pct` são automaticamente normalizados.
+Plota:
+
+* Curva de Equity
+* Retornos diários
+* Drawdown
 
 ---
 
-## 🛡️ Gestão de Risco
+## 🔧 Variáveis de ambiente
 
-* **Stop obrigatório**: definido em `strategy_params.stop_method`:
+Arquivo `.env` (exemplo):
 
-  * `"atr"` → stop = preço - ATR * mult
-  * `"ma"`  → stop = média móvel
-  * `"channel"` (Donchian) → banda inferior
-* **Position sizing**:
-
-  * Calcula o risco por ação = entrada - stop.
-  * Define tamanho máximo tal que perda ≤ 1% do equity.
-  * Respeita também limite de caixa disponível.
-* **Parâmetros configuráveis**: `risk_pct`, `atr_period`, `atr_mult`, `lot_size`.
+```
+DATABASE_URL=postgresql+psycopg2://appuser:appsecret@localhost:5432/tradingdb
+BT_DEBUG=0
+```
 
 ---
 
-## 📌 Próximos Passos / Extensões
+## 📌 Roadmap Futuro
 
-* Suporte a operações short.
-* Integração com dados em tempo real para execução live.
-* Deploy em Docker com Postgres.
+* Estratégias adicionais (mean reversion, pairs trading)
+* Execução live com integração corretora
+* CI/CD com GitHub Actions
+* Painel frontend React
 
 ---
 
-## 👤 Autor - Pedro Rodrigues
+## 📜 Licença
 
-Projeto desenvolvido como **case prático** de vaga para **Dev Jr - Mercado Financeiro**.
-
+MIT License.
