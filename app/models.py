@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import (
     String, Integer, DateTime, Float, ForeignKey,
-    UniqueConstraint, Index, Text
+    UniqueConstraint, Index, Text, func
 )
 class Symbol(Base):
     __tablename__ = "symbols"
@@ -107,9 +107,9 @@ class Metric(Base):
 
 class JobRun(Base):
     __tablename__ = "job_runs"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    job_name: Mapped[str] = mapped_column(String(60))
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    job_name: Mapped[str] = mapped_column(String(100), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="started")
-    message: Mapped[str | None] = mapped_column(Text, nullable=True)    
+    status: Mapped[str] = mapped_column(String(20), default="started")  # started|ok|error
+    message: Mapped[str | None] = mapped_column(Text, nullable=True)

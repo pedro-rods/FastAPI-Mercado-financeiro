@@ -130,3 +130,20 @@ def get_results(db: Session, backtest_id: int):
         } for d in dps],
         "equity_curve": [{"date": d.date.isoformat(), "equity": d.equity} for d in dps],
     }
+
+def jobrun_start(db: Session, job_name: str, message: str | None = None) -> models.JobRun:
+    jr = models.JobRun(job_name=job_name, status="started", message=message or "")
+    db.add(jr)
+    db.commit()
+    db.refresh(jr)
+    return jr
+
+def jobrun_finish(db: Session, jr_id: int, status: str, message: str | None = None):
+    jr = db.query(models.JobRun).filter(models.JobRun.id == jr_id).first()
+    if not jr:
+        return
+    jr.status = status
+    jr.finished_at = datetime.utcnow()
+    if message:
+        jr.message = (jr.message or "") + ("\n" if jr.message else "") + message
+    db.commit()

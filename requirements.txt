@@ -8,3 +8,6 @@ backtrader
 matplotlib
 pandas
 numpy
+pytest
+pytest-cov
+htppx==0.27.2

@@ -1,5 +1,5 @@
 # app/main.py
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from app.db import engine, Base, get_db
 from app import schemas, crud, models
@@ -7,6 +7,9 @@ from app.strategies import REGISTRY, validate_and_normalize_params
 from app.services.yahoo import fetch_prices
 from app.crud_prices import ensure_symbol, bulk_upsert_prices
 from app.backtest_engine import run_backtest as bt_run
+from app.ui import router as ui_router
+from app.jobs.daily_indicators import run_daily_indicators
+from app.jobs.health_check import run_health_check
 
 from app.models import (
     Symbol, Price, Indicator, Backtest, Trade, DailyPosition, Metric, JobRun
@@ -28,12 +31,15 @@ def on_startup():
     )
     Base.metadata.create_all(bind=engine)
 
+# -- data visualization -- 
+app.include_router(ui_router) # http://127.0.0.1:8000/ui/backtests/<ID>
+
 # -------------- HEALTH --------------
 @app.get("/health", response_model=schemas.HealthResponse)
 def health(db: Session = Depends(get_db)):
     # Checagem simples de conexão com o DB
     try:
-        db.execute("SELECT 1")
+        db.execute("(SELECT 1)")
         return schemas.HealthResponse(status="ok", db="connected")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -173,4 +179,17 @@ def update_indicators(req: schemas.UpdateIndicatorsRequest, db: Session = Depend
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# -- possibilidade de rodar os jobs manualmente    
+    
+@app.post("/jobs/daily_indicators")
+def jobs_daily_indicators(tickers: list[str], background: BackgroundTasks, db: Session = Depends(get_db)):
+    # dispara async (não trava o request)
+    background.add_task(run_daily_indicators, db, tickers)
+    return {"status": "accepted", "job": "daily_indicators", "tickers": tickers}
+
+@app.post("/jobs/health_check")
+def jobs_health_check(background: BackgroundTasks, db: Session = Depends(get_db)):
+    background.add_task(run_health_check, db)
+    return {"status": "accepted", "job": "health_check"}
 
